@@ -1,7 +1,7 @@
 import '../css/app.css';
 import './bootstrap';
 import "@fontsource/work-sans";
-
+import 'material-icons/iconfont/material-icons.css'; // Material Icons
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
