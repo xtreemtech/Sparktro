@@ -1,20 +1,42 @@
 <template>
-  <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-sparktro">
+  <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
     <div class="flex justify-between items-center mb-4">
-      <h2 class="text-lg font-semibold text-black-sparktro">Revenue</h2>
+      <h2 class="text-lg font-semibold text-gray-900">Revenue</h2>
 
-      <div class="flex items-center gap-4">
-        <!-- Chart Legend Container (will be populated by ApexCharts) -->
-        <div id="custom-legend" class="flex items-center gap-3"></div>
-
-        <!-- Dropdown -->
-        <div class="relative">
-          <select
-            class="appearance-none text-sm border border-gray-300 rounded px-3 py-1 pr-8 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+        <!-- Custom Legend - Grey background removed -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div
+            v-for="(serie, index) in seriesData"
+            :key="index"
+            @click="toggleSeries(index)"
+            @mouseover="highlightSeries(index, true)"
+            @mouseleave="highlightSeries(index, false)"
+            class="flex items-center cursor-pointer transition-all duration-150"
+            :class="{
+              'opacity-60': !activeSeries[index],
+              'hover:opacity-100': true
+            }"
           >
-            <option>May 2025</option>
+            <span
+              class="w-3 h-3 rounded-full mr-2"
+              :style="{ backgroundColor: chartOptions.colors[index] }"
+            ></span>
+            <span class="text-xs font-medium text-gray-700">{{ serie.name }}</span>
+          </div>
+        </div>
+
+        <!-- Period Dropdown - Fixed double arrow -->
+        <div class="relative w-32">
+          <select
+            v-model="selectedPeriod"
+            class="block w-full text-sm border border-gray-300 rounded px-3 py-1 pr-8 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-none"
+          >
+            <option value="May 2025">May 2025</option>
+            <option value="Apr 2025">Apr 2025</option>
+            <option value="Mar 2025">Mar 2025</option>
           </select>
-          <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-gray-500">
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
             <svg
               class="w-4 h-4"
               fill="none"
@@ -37,45 +59,70 @@
       type="area"
       height="300"
       :options="chartOptions"
-      :series="series"
-      @legendClick="handleLegendClick"
+      :series="filteredSeries"
       ref="chart"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import VueApexCharts from "vue3-apexcharts";
-
-defineOptions({ components: { apexchart: VueApexCharts } });
+import { ref, computed } from "vue";
 
 const chart = ref(null);
+const selectedPeriod = ref("May 2025");
+const activeSeries = ref([true, true]);
 
-const series = ref([
+const seriesData = [
   {
     name: "Revenue",
     data: [0.2, 0.3, 0.35, 0.4, 0.6, 0.78, 0.85, 0.9, 0.88, 0.92, 0.87, 0.89],
   },
   {
     name: "Expenses",
-    data: [
-      0.18, 0.22, 0.26, 0.3, 0.42, 0.55, 0.61, 0.68, 0.7, 0.74, 0.76, 0.78,
-    ],
+    data: [0.18, 0.22, 0.26, 0.3, 0.42, 0.55, 0.61, 0.68, 0.7, 0.74, 0.76, 0.78],
   },
-]);
+];
 
-const chartOptions = ref({
+const filteredSeries = computed(() =>
+  seriesData.map((serie, index) => ({
+    ...serie,
+    data: activeSeries.value[index]
+      ? serie.data
+      : serie.data.map(() => null),
+  }))
+);
+
+const toggleSeries = (index) => {
+  activeSeries.value[index] = !activeSeries.value[index];
+  if (chart.value) {
+    chart.value.updateSeries(
+      [
+        {
+          data: activeSeries.value[index]
+            ? seriesData[index].data
+            : seriesData[index].data.map(() => null),
+        },
+      ],
+      false,
+      index
+    );
+  }
+};
+
+const highlightSeries = (index, highlight) => {
+  if (chart.value) {
+    chart.value.highlightSeries(index, highlight);
+  }
+};
+
+const chartOptions = {
   chart: {
     toolbar: { show: false },
     zoom: { enabled: false },
-    events: {
-      mounted: (chartContext, config) => {
-        moveLegendToHeader(chartContext);
-      },
-      updated: (chartContext, config) => {
-        moveLegendToHeader(chartContext);
-      },
+    animations: {
+      enabled: true,
+      easing: "easeinout",
+      speed: 800,
     },
   },
   colors: ["#3E82F7", "#28C76F"],
@@ -83,15 +130,6 @@ const chartOptions = ref({
   stroke: {
     curve: "smooth",
     width: 2,
-  },
-  fill: {
-    type: "gradient",
-    gradient: {
-      shadeIntensity: 1,
-      opacityFrom: 0.4,
-      opacityTo: 0.1,
-      stops: [0, 90, 100],
-    },
   },
   xaxis: {
     categories: [
@@ -110,69 +148,26 @@ const chartOptions = ref({
     },
   },
   legend: {
-    show: true,
-    position: 'top',
-    horizontalAlign: 'right',
-    offsetY: -10,
-    markers: {
-      width: 10,
-      height: 10,
-      radius: 2,
-    },
-    itemMargin: {
-      horizontal: 10,
-      vertical: 0
-    },
+    show: false,
   },
-});
-
-const moveLegendToHeader = (chartContext) => {
-  const legend = chartContext.el.querySelector('.apexcharts-legend');
-  if (legend) {
-    document.getElementById('custom-legend').appendChild(legend);
-    // Adjust legend position
-    legend.style.position = 'relative';
-    legend.style.top = '0';
-    legend.style.right = '0';
-    legend.style.transform = 'none';
-  }
-};
-
-const handleLegendClick = (chartContext, seriesIndex, config) => {
-  // This maintains the default legend click behavior
-  chart.value.toggleSeries(seriesIndex);
 };
 </script>
 
 <style scoped>
-/* Style the legend items */
-:deep(.apexcharts-legend) {
-  padding: 0 !important;
-  margin: 0 !important;
-  position: static !important;
+/* Remove default dropdown styling completely */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: none;
+  background-color: transparent;
+}
+select::-ms-expand {
+  display: none;
 }
 
-:deep(.apexcharts-legend-series) {
-  margin: 0 10px 0 0 !important;
-  display: flex;
-  align-items: center;
-}
-
-:deep(.apexcharts-legend-marker) {
-  margin-right: 6px !important;
-}
-
-:deep(.apexcharts-legend-text) {
-  font-size: 12px !important;
-  color: #6B7280 !important;
-  font-family: 'Inter', sans-serif !important;
-}
-
-@media (max-width: 640px) {
-  .flex.items-center.gap-4 {
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 8px;
-  }
+/* Custom legend item styling */
+.flex.items-center.cursor-pointer {
+  padding: 0.25rem 0.5rem;
 }
 </style>

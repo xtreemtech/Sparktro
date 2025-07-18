@@ -1,198 +1,182 @@
 <script setup>
-import { ref } from 'vue';
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
-import Dropdown from '@/Components/Dropdown.vue';
-import DropdownLink from '@/Components/DropdownLink.vue';
-import NavLink from '@/Components/NavLink.vue';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
-import { Link } from '@inertiajs/vue3';
+import { ref } from "vue";
+import { Link } from "@inertiajs/vue3";
+
+// IMPORTANT: Import the actual Sidebar component here
+import Sidebar from "@/Components/Sidebar.vue"; // Ensure this path is correct
+
+// These are for the top navigation dropdowns, keep them if you use them
+import ApplicationLogo from "@/Components/ApplicationLogo.vue";
+import Dropdown from "@/Components/Dropdown.vue";
+import DropdownLink from "@/Components/DropdownLink.vue";
+import NavLink from "@/Components/NavLink.vue";
+import ResponsiveNavLink from "@/Components/ResponsiveNavLink.vue";
+
 
 const showingNavigationDropdown = ref(false);
+
+const sidebarVisible = ref(true); // State for sidebar visibility
+function toggleSidebar() {
+    sidebarVisible.value = !sidebarVisible.value;
+}
+
+// No need for userMenuOpen, rolePermissionMenuOpen, etc. here anymore.
+// They belong inside Sidebar.vue
 </script>
 
 <template>
-    <div>
-        <div class="min-h-screen bg-gray-100">
-            <nav
-                class="border-b border-gray-100 bg-white"
-            >
-                <!-- Primary Navigation Menu -->
-                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div class="flex h-16 justify-between">
-                        <div class="flex">
-                            <!-- Logo -->
-                            <div class="flex shrink-0 items-center">
-                                <Link :href="route('dashboard')">
-                                    <ApplicationLogo
-                                        class="block h-9 w-auto fill-current text-gray-800"
-                                    />
-                                </Link>
-                            </div>
+    <div class="bg-gray-sparktro min-h-screen flex">
+        <!-- RENDER THE IMPORTED SIDEBAR COMPONENT HERE -->
+        <!-- Pass the sidebarVisible state and listen for the toggle event -->
+        <Sidebar :sidebarVisible="sidebarVisible" @toggle-sidebar="toggleSidebar" />
 
-                            <!-- Navigation Links -->
-                            <div
-                                class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex"
-                            >
-                                <NavLink
-                                    :href="route('dashboard')"
-                                    :active="route().current('dashboard')"
-                                >
-                                    Dashboard
-                                </NavLink>
-                            </div>
-                        </div>
-
-                        <div class="hidden sm:ms-6 sm:flex sm:items-center">
-                            <!-- Settings Dropdown -->
-                            <div class="relative ms-3">
-                                <Dropdown align="right" width="48">
-                                    <template #trigger>
-                                        <span class="inline-flex rounded-md">
-                                            <button
-                                                type="button"
-                                                class="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
-                                            >
-                                                {{ $page.props.auth.user.name }}
-
-                                                <svg
-                                                    class="-me-0.5 ms-2 h-4 w-4"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                >
-                                                    <path
-                                                        fill-rule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clip-rule="evenodd"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </span>
-                                    </template>
-
-                                    <template #content>
-                                        <DropdownLink
-                                            :href="route('profile.edit')"
-                                        >
-                                            Profile
-                                        </DropdownLink>
-                                        <DropdownLink
-                                            :href="route('logout')"
-                                            method="post"
-                                            as="button"
-                                        >
-                                            Log Out
-                                        </DropdownLink>
-                                    </template>
-                                </Dropdown>
-                            </div>
-                        </div>
-
-                        <!-- Hamburger -->
-                        <div class="-me-2 flex items-center sm:hidden">
-                            <button
-                                @click="
-                                    showingNavigationDropdown =
-                                        !showingNavigationDropdown
-                                "
-                                class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 focus:text-gray-500 focus:outline-none"
-                            >
-                                <svg
-                                    class="h-6 w-6"
-                                    stroke="currentColor"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        :class="{
-                                            hidden: showingNavigationDropdown,
-                                            'inline-flex':
-                                                !showingNavigationDropdown,
-                                        }"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                    <path
-                                        :class="{
-                                            hidden: !showingNavigationDropdown,
-                                            'inline-flex':
-                                                showingNavigationDropdown,
-                                        }"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Responsive Navigation Menu -->
-                <div
-                    :class="{
-                        block: showingNavigationDropdown,
-                        hidden: !showingNavigationDropdown,
-                    }"
-                    class="sm:hidden"
-                >
-                    <div class="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            :href="route('dashboard')"
-                            :active="route().current('dashboard')"
-                        >
-                            Dashboard
-                        </ResponsiveNavLink>
-                    </div>
-
-                    <!-- Responsive Settings Options -->
-                    <div
-                        class="border-t border-gray-200 pb-1 pt-4"
-                    >
-                        <div class="px-4">
-                            <div
-                                class="text-base font-medium text-gray-800"
-                            >
-                                {{ $page.props.auth.user.name }}
-                            </div>
-                            <div class="text-sm font-medium text-gray-500">
-                                {{ $page.props.auth.user.email }}
-                            </div>
-                        </div>
-
-                        <div class="mt-3 space-y-1">
-                            <ResponsiveNavLink :href="route('profile.edit')">
-                                Profile
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                :href="route('logout')"
-                                method="post"
-                                as="button"
-                            >
-                                Log Out
-                            </ResponsiveNavLink>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
-            <!-- Page Heading -->
+        <!-- Main Content Area -->
+        <!-- Adjust the left margin based on sidebarVisible state -->
+        <div
+            :class="{ 'ml-[280px]': sidebarVisible, 'ml-[72px]': !sidebarVisible }"
+            class="flex-1 flex flex-col transition-all duration-300"
+        >
+            <!-- Top bar (Header) -->
             <header
-                class="bg-white shadow"
-                v-if="$slots.header"
+                class="bg-white shadow-sm h-[68px] px-6 py-2.5 flex justify-between items-center border-b border-gray-sparktro"
             >
-                <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                    <slot name="header" />
+                <!-- Search Input -->
+                <div class="flex items-center relative w-[300px] gap-[10px]">
+                    <svg
+                        class="absolute left-4 w-4 h-4 text-black-sparktro/50 pointer-events-none"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.35 4.35a7.5 7.5 0 0012.3 12.3z"
+                        />
+                    </svg>
+                    <input
+                        type="text"
+                        placeholder="Search..."
+                        class="w-full h-[40px] py-[12px] pr-[16px] pl-[40px] border border-gray-sparktro rounded-[8px] focus:outline-none focus:ring-1 focus:ring-primary-sparktro focus:border-primary-sparktro"
+                    />
+                </div>
+
+                <!-- Right Actions -->
+                <div class="flex items-center space-x-4 ml-4">
+                    <!-- Language Selector -->
+                    <div class="relative">
+                        <select
+                            class="appearance-none border-0 rounded px-3 py-1 text-sm focus:outline-none pr-7 bg-white [&::-ms-expand]:hidden"
+                        >
+                            <option value="en">English</option>
+                            <option value="bd">Bangla</option>
+                        </select>
+                    </div>
+
+                    <!-- Notification Icon -->
+                    <button class="relative text-black-sparktro">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                        >
+                            <path
+                                d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a2 2 0 002-2H8a2 2 0 002 2z"
+                            />
+                        </svg>
+                        <span
+                            class="absolute top-0 right-0 inline-block w-2 h-2 bg-red-sparktro rounded-full"
+                        ></span>
+                    </button>
+
+                    <!-- User Avatar -->
+                    <div class="relative group">
+                        <div
+                            class="w-8 h-8 rounded-full bg-primary-sparktro flex items-center justify-center text-white font-bold cursor-pointer"
+                        >
+                            JD
+                        </div>
+                        <div
+                            class="absolute right-0 mt-2 w-40 bg-white border border-gray-sparktro rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50"
+                        >
+                            <div class="p-2 text-sm">
+                                <p class="font-semibold text-black-sparktro">John Doe</p>
+                                <p class="text-black-sparktro/60">john@example.com</p>
+                            </div>
+                            <div class="border-t border-gray-sparktro">
+                                <Link
+                                    :href="route('profile.edit')"
+                                    class="block px-3 py-2 text-sm hover:bg-gray-sparktro"
+                                    >Profile</Link
+                                >
+                                <Link
+                                    :href="route('logout')"
+                                    method="post"
+                                    as="button"
+                                    class="block w-full text-left px-3 py-2 text-sm hover:bg-gray-sparktro"
+                                    >Logout</Link
+                                >
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </header>
 
-            <!-- Page Content -->
-            <main>
+            <!-- MAIN CONTENT SLOT -->
+            <!-- This is where the content of Dashboard.vue (and other pages) will be rendered -->
+            <main class="p-6 flex-1 overflow-y-auto">
                 <slot />
             </main>
         </div>
     </div>
 </template>
+
+<style scoped>
+/* Custom Sparktro Colors (add these to your Tailwind config or here for demo) */
+.text-black-sparktro {
+    color: #333333;
+}
+.text-primary-sparktro {
+    color: #667eea;
+} /* Example primary color */
+.bg-primary-sparktro\/10 {
+    background-color: rgba(102, 126, 234, 0.1);
+}
+.border-gray-sparktro {
+    border-color: #e5e7eb;
+} /* A light gray for borders */
+.bg-gray-sparktro {
+    background-color: #f8f9fa;
+} /* The light background color */
+.bg-red-sparktro {
+    background-color: #ef4444;
+}
+
+/* Styles for Material Icons (ensure this is loaded globally or in app.css) */
+.material-icons-outlined {
+    font-family: "Material Icons Outlined";
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px; /* Preferred icon size */
+    display: inline-block;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+    /* Support for all WebKit browsers. */
+    -webkit-font-smoothing: antialiased;
+    /* Support for Safari and Chrome. */
+    text-rendering: optimizeLegibility;
+    /* Support for Firefox. */
+    -moz-osx-font-smoothing: grayscale;
+    /* Support for IE. */
+    font-feature-settings: "liga";
+}
+
+/* Any sidebar-specific styles should now live in Sidebar.vue's <style> block */
+/* These were removed from here as they are now in Sidebar.vue */
+</style>

@@ -1,9 +1,9 @@
 <script setup>
 import { ref } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/vue3';
-// 1. Import the EditUser component
-import EditUser from '@/Components/UserManagement/EditUser.vue'; // Adjust path if necessary
+import { Head, router } from '@inertiajs/vue3'; // Added 'router' here
+import EditUser from '@/Components/UserManagement/EditUser.vue';
+import DeleteConfirmationModal from '@/Components/UserManagement/DeleteConfirmationModal.vue'; // Make sure this path is correct!
 
 // User data (your existing data)
 const users = ref([
@@ -19,7 +19,6 @@ const users = ref([
     role: 'Admin',
     status: true,
     showDropdown: false,
-    // Add dummy properties needed by EditUser.vue form (e.g., joiningDate, address, gender, dutySchedule, password, userId for demonstration)
     joiningDate: '2025-05-11',
     address: '123 Main St',
     gender: 'Male',
@@ -200,9 +199,12 @@ const users = ref([
   }
 ]);
 
-// 2. Add reactive state for the modal
 const showEditUserModal = ref(false);
 const selectedUserForEdit = ref(null);
+
+// New reactive state for delete confirmation modal
+const showDeleteConfirmationModal = ref(false);
+const userToDelete = ref(null);
 
 const getRoleBadgeClass = (role) => {
   switch(role) {
@@ -225,25 +227,21 @@ const toggleDropdown = (user) => {
   user.showDropdown = !user.showDropdown;
 };
 
-// Close dropdown when clicking outside
 const closeDropdowns = () => {
   users.value.forEach(u => {
     u.showDropdown = false;
   });
 };
 
-// Close dropdowns when clicking anywhere in the document
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.dropdown-button') && !e.target.closest('.dropdown-menu')) {
     closeDropdowns();
   }
 });
 
-// 3. Functions to handle modal visibility and data
 const openEditUserModal = (user) => {
-  selectedUserForEdit.value = { ...user }; // Create a copy to avoid direct mutation
+  selectedUserForEdit.value = { ...user };
   showEditUserModal.value = true;
-  // Ensure dropdowns are closed when opening modal
   closeDropdowns();
   console.log('Opening Edit User Modal for:', selectedUserForEdit.value);
 };
@@ -255,16 +253,61 @@ const closeEditUserModal = () => {
 };
 
 const handleUserUpdated = (updatedUserData) => {
-  // Find the user in the local 'users' array and update their data
   const index = users.value.findIndex(user => user.id === updatedUserData.id);
   if (index !== -1) {
-    // Merge existing user data with updated data
     users.value[index] = { ...users.value[index], ...updatedUserData };
     console.log('User updated in All.vue:', users.value[index]);
   }
-  // In a real application, you would also send this update to your backend.
+};
+
+// Functions for delete confirmation and action
+const openDeleteConfirmationModal = (user) => {
+  userToDelete.value = user; // Set the user to be deleted
+  showDeleteConfirmationModal.value = true;
+  closeDropdowns(); // Close any open dropdown
+  console.log('Opening Delete Confirmation Modal for:', user.name);
+};
+
+const closeDeleteConfirmationModal = () => {
+  showDeleteConfirmationModal.value = false;
+  userToDelete.value = null; // Clear user to delete
+  console.log('Closing Delete Confirmation Modal');
+};
+
+const confirmUserDeletion = () => {
+  if (userToDelete.value) {
+    // Send a DELETE request to the Laravel backend
+    // Make sure you have a route named 'users.destroy' in your web.php or api.php
+    router.delete(route('users.destroy', userToDelete.value.id), {
+      onSuccess: () => {
+        // If deletion is successful on the backend, remove the user from the local array
+        const index = users.value.findIndex(user => user.id === userToDelete.value.id);
+        if (index !== -1) {
+          users.value.splice(index, 1);
+          console.log(`User ${userToDelete.value.name} (ID: ${userToDelete.value.id}) removed successfully.`);
+        }
+        closeDeleteConfirmationModal(); // Close the modal after successful deletion
+        // Optionally, display a success toast/flash message here
+      },
+      onError: (errors) => {
+        // Handle errors from the backend (e.g., validation, authorization)
+        console.error('Error deleting user:', errors);
+        alert('Failed to delete user. Please check console for details.');
+        closeDeleteConfirmationModal(); // Close the modal even on error
+      },
+      onFinish: () => {
+        // This callback runs regardless of success or failure
+        console.log('Delete request finished for user:', userToDelete.value ? userToDelete.value.name : 'N/A');
+      }
+    });
+  } else {
+    console.warn('No user selected for deletion in confirmUserDeletion.');
+    closeDeleteConfirmationModal();
+  }
 };
 </script>
+
+---
 
 <template>
   <Head title="Customer List" />
@@ -411,7 +454,7 @@ const handleUserUpdated = (updatedUserData) => {
                                 Edit
                               </button>
                               <button
-                                class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left"
+                                @click="openDeleteConfirmationModal(user)" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left"
                               >
                                 Delete
                               </button>
@@ -460,10 +503,17 @@ const handleUserUpdated = (updatedUserData) => {
       @update="handleUserUpdated"
     />
 
+    <DeleteConfirmationModal
+      :show="showDeleteConfirmationModal"
+      :userId="userToDelete ? userToDelete.id : null" :userName="userToDelete ? userToDelete.name : ''"
+      @confirm="confirmUserDeletion"
+      @cancel="closeDeleteConfirmationModal"
+    />
   </AuthenticatedLayout>
 </template>
 
+---
+
 <style scoped>
 /* Add any custom styles here if needed */
-/* Ensure the styles for .dropdown-button and .dropdown-menu are scoped to this component */
 </style>
